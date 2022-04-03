@@ -1,0 +1,311 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <Keypad.h>
+LiquidCrystal_I2C lcd(0x27,20,4); // setting the LCD address to 0x27 for a 16 chars and 2 line display
+#define BUZZER_PIN 10//defining buzzer pin
+#define BUTTON_PIN 11//ignore lol
+
+const int ROW_NUM = 4; //four rows for the keypad
+const int COLUMN_NUM = 3; //three columns for keypad
+
+char keys[ROW_NUM][COLUMN_NUM] = { //defining keypad keys
+  {'1','2','3'},
+  {'4','5','6'},
+  {'7','8','9'},
+  {'0','0','0'}
+};
+
+byte pin_rows[ROW_NUM] = {9, 8, 7, 6}; //connecting to the row pinouts of the keypad
+byte pin_column[COLUMN_NUM] = {5, 4, 3}; //connecting to the column pinouts of the keypad
+
+Keypad keypad = Keypad( makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM );
+
+int second = 0;//second int
+int minute = 0;//minute int
+int hour = 0;//hour int
+char firsthournum;//first hour number typed by user
+char firstminutenum;//first minute number typed by user
+char firstsecondnum;//first second number typed by user
+char secondhournum;//second hour number typed by user
+char secondminutenum;//second minute number typed by user
+char secondsecondnum;//second second number typed by user
+
+
+void setup(){
+  Serial.begin(9600);
+  lcd.init(); // initialize the lcd
+  lcd.init(); // do it again cuz it only works if u do it twice for some reason
+  lcd.backlight();//turn on backlight
+  pinMode(BUZZER_PIN, OUTPUT);//setting buzzer to outuput
+  Serial.begin(9600);//begin serial monitor for 9600
+  pinMode(BUTTON_PIN, INPUT_PULLUP);//ignore lol
+  lcd.setCursor(2,0);//lcd.setCursor means its setting the lcd to print at that location, first digit's rows and second's columns
+  lcd.print("   :    :   ");
+  lcd.setCursor(4,1);
+  lcd.print("Set timer");
+  
+
+
+ 
+}
+  boolean typable = true;//self explainable
+  int currentNum = 2;//local cursor for typing row
+  int currentRow = 0;//same as current num but columns
+  int passnum1 = 0;
+  int lastState = HIGH;//ignore
+  int currentState;//ignore
+  void(* resetFunc) (void) = 0;//ignore
+  boolean exploded = false;//self explanitory
+  boolean settingtime = true;//if player is setting the time
+  boolean firstSetup = false;
+
+  
+
+
+
+
+
+void loop(){
+
+
+  int currentState = digitalRead(BUTTON_PIN);//ignore
+ 
+  
+  
+  
+  char key = keypad.getKey(); // setting keypad input to local char
+  
+  if (settingtime && currentNum == 4){ //next three conditionals are for moving around while typing in the time
+    currentNum = 7;
+  }
+  if (settingtime && currentNum == 9){
+    currentNum = 12;
+  }
+  if (settingtime && currentNum == 14){
+    settingtime = false;
+    passnum1 = 0;
+    currentNum = 4;
+    currentRow = 1;
+    lcd.setCursor(2,0);
+    lcd.print("Set password");
+    lcd.setCursor(0,1);
+    lcd.print("                    "); //clear second row
+  }
+  
+
+  
+
+  if (key && typable){
+    if (exploded){
+      resetFunc();//restarts entire thing if exploded and something's typed
+    }
+    if ((key != '*') && (key != '#')){      //ignore lol
+      lcd.setCursor(currentNum,currentRow);
+      lcd.print(key);
+      currentNum++;
+      beep(4000, random(40,10));
+      passnum1++; 
+
+
+
+
+
+      
+      //timer value gatherer      ISSUE STARTS HERE ---------
+      //basically what I want it to do is when you get both variables for the first number of time and the second number, it'll multiply the first number by ten and add them together, but for some reason it gotta be stupid
+      if (settingtime && currentNum == 3){
+      firsthournum = (key);
+      
+      
+      }
+      
+      if (settingtime && currentNum == 4){
+      secondhournum = (key);
+      secondhournum = timesten(secondhournum);
+      
+      hour = (int(firsthournum) + secondhournum);
+
+      Serial.println(hour);
+      Serial.println(firsthournum);
+      Serial.println(secondhournum);
+      }
+
+
+
+      
+      if (settingtime && currentNum == 8){
+      firstminutenum = (key);
+      firstminutenum = timesten(firstminutenum);
+      }
+      if (settingtime && currentNum == 9){
+      secondminutenum = (key);
+
+      minute = (int(firstminutenum) + secondminutenum);
+      Serial.println(minute);
+      Serial.println(firstminutenum);
+      Serial.println(secondminutenum);
+      }
+
+
+
+
+      if (settingtime && currentNum == 13){
+      firstsecondnum = (key);
+      
+      }
+      if (settingtime && currentNum == 14){
+      secondsecondnum = (key);
+      secondsecondnum = timesten(secondsecondnum);
+      
+      second = (int(firstsecondnum) + secondsecondnum);
+      Serial.println(second);
+      Serial.println(firstsecondnum);
+      Serial.println(secondsecondnum);
+      }
+      
+    }
+  }                                 //ISSUE ENDS HERE
+  
+  if(settingtime == false){
+
+
+  if(firstSetup == false){
+    
+  }
+  
+    
+  if(passnum1 == 8){
+      passnum1 = 9;
+      typable = false;
+      lcd.setCursor(2,0);
+      lcd.print("Password Set");
+      beep(100, random(250)); beep(100, random(250)); beep(100, random(250)); beep(100, random(250)); beep(100, random(250)); beep(100, random(250)); beep(100, random(250));
+      lcd.setCursor(4,1);
+      lcd.print("********");
+      delay(2000);
+
+
+      // count down
+
+      lcd.setCursor(2,0);
+      lcd.print("   :    :   ");
+      
+      //set time
+      
+
+      int delayamount = 1000;
+      
+
+
+      //timer loop
+      boolean countdown = true;
+       while(countdown){
+        
+        delay(10);
+
+         
+         
+         second--;
+         
+          analogWrite(BUZZER_PIN, 200);
+          delay(delayamount / 4); 
+          analogWrite(BUZZER_PIN, 0);
+          delay((delayamount / 4) * 3); 
+
+         if (second == 0){
+          if (!(minute == 0)){
+            minute--;
+            second = 59;
+          }
+          
+         }
+         if (minute == 0){
+          if (!(hour == 0)){
+            hour--;
+            minute = 59;
+          }
+         }
+         
+         lcd.setCursor(2,0);
+         lcd.print(String(hour));
+
+         lcd.setCursor(7,0);
+         lcd.print(String(minute));
+
+         lcd.setCursor(12,0);
+         lcd.print(String(second));
+
+         lcdcheck(second, 13);
+         lcdcheck(minute, 8);
+         lcdcheck(hour, 3);
+         if((hour == 0) && (minute == 0) && (second == 0)){
+          countdown = false;
+         }
+
+       }    
+
+       if (countdown == false){
+        lcd.setCursor(0,0);
+        lcd.print("                           ");
+        lcd.setCursor(0,1);
+        lcd.print("                           ");
+        lcd.setCursor(2,0);
+        lcd.print("The bomb has");
+        lcd.setCursor(4,1);
+        lcd.print("exploded");
+        analogWrite(BUZZER_PIN, 250);
+        delay(5000); 
+        analogWrite(BUZZER_PIN, 0);
+        exploded = true;
+        typable = true;
+        
+  }
+  }
+  
+}
+}
+void beep(unsigned char delayms, int intensity){
+ analogWrite(BUZZER_PIN, intensity);
+ delay(delayms); 
+ analogWrite(BUZZER_PIN, 0);
+ delay(delayms); 
+}  
+void lcdcheck(int num, int pos){
+  if (num < 10){
+    lcd.setCursor(pos, 0);
+    lcd.print(" ");
+  }
+}
+int timesten(int num){ //my attept at a workaround for multiplication not working
+  if(num == 0){
+    return 0;
+  }
+  if(num == 1){
+    return 10;
+  }
+    if(num == 2){
+    return 20;
+  }
+    if(num == 3){
+    return 30;
+  }
+    if(num == 4){
+    return 40;
+  }
+    if(num == 5){
+    return 50;
+  }
+    if(num == 6){
+    return 60;
+  }
+    if(num == 7){
+    return 70;
+  }
+    if(num == 8){
+    return 80;
+  }
+    if(num == 9){
+    return 90;
+  }
+  return 0;
+}
